@@ -37,3 +37,11 @@ Source repo: https://github.com/yearylyworker-collab/vovchok-academy (Pages: htt
 ## Fork check (Sep 2026)
 - Post-fork smoke test passed: backend + bot polling running, /api/miniapp/ serves /app/docs, /api/mentor/* responds. No code changes needed.
 - Deployment reminder for user: Save to GitHub → enable Pages (source /docs); Publish backend; then set window.VA_API_URL in docs/index.html to published backend URL + "/api" and update MINI_APP_URL in backend/.env + BotFather menu button.
+
+## Итерация 7 (июнь 2026) — прогресс на сервере, напоминания, новая презентация бота
+- Серверный прогресс: `backend/sync_store.py` (проверка Telegram initData HMAC + merge без потерь), эндпоинты `POST /api/progress/sync`, `POST /api/progress/reset`, `GET /api/progress/{uid}`, коллекция Mongo `progress`. Фронт: `docs/sync.js` (пуш с debounce 1.5s, пуш при visibilitychange, merge при старте), `VAProgress.exportState/importState`, карточка «Синхронизация прогресса» в профиле (`profile-sync`, кнопка `sync-now-button`), ключи i18n `sync_*` в 3 языках.
+- Напоминания: `bot/reminders.py` — раз в 30 мин ищет учеников с простоем 2+ дня (`last_seen`) и отправляет мотивационное сообщение (4 фиксированных варианта × 3 языка, подстановка XP и числа уроков), не чаще 1 раза в 2 дня, без ограничения по количеству. Активность пишется из Mini App (sync) и из бота (`bot.ACTIVITY` → `_touch_user`). Без расхода AI.
+- Бот переписан под новый сценарий: `/start` → выбор языка → главное фото `welcome.png` → текст о трёх решениях → 4 инфографики (`access/modules/inside/mentor` × ru/uk/ar) → финальный CTA. Паузы 1.5 с + chat action, эмодзи во всех текстах и кнопках, постоянная reply-клавиатура удалена, картинки кэшируются по file_id.
+- Инфографики: `bot/promo/build.py` (HTML + headless Chrome → PNG 1672×941, шрифты Montserrat/Noto Sans Arabic/Caveat), 12 картинок в `bot/assets/`; главное фото — от заказчика.
+- Документы для сдачи: `memory/CLIENT_REPORT.md` (состав продукта, расчёт AI-затрат под $50, обоснование цены и сравнение с рынком), `memory/HANDOVER.md` (передача бота, хостинг 24/7, подписка, GitHub Pages, VPS).
+- Тесты: iteration_7 — backend 14/14 pytest (`backend/tests/test_progress_sync.py`), фронт E2E восстановления прогресса после очистки localStorage, 0 ошибок консоли; `tests/test_bot_flow.py` — сценарий презентации в 3 языках.

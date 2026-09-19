@@ -101,3 +101,53 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+## Iteration 7 — серверный прогресс + напоминания + новая презентация бота (main agent)
+backend:
+  - task: "POST /api/progress/sync — слияние прогресса ученика (Mongo collection progress)"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py, /app/backend/sync_store.py"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        comment: "uid 'web:*' для браузера; для Telegram — проверка initData HMAC (BOT_TOKEN) → uid 'tg:<id>' + chat_id. Слияние: XP/стрик = max, done/ach/practice = объединение, history ≤500."
+  - task: "POST /api/progress/reset и GET /api/progress/{uid}"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    needs_retesting: true
+  - task: "Напоминания бота через 2 дня простоя (reminders.reminder_loop)"
+    implemented: true
+    working: true
+    file: "/app/bot/reminders.py"
+    needs_retesting: false
+    status_history:
+      - working: true
+        comment: "Проверено локально: _tick отправляет 1 сообщение stale-пользователю, повторный тик = 0. Тексты ru/uk/ar, ротация 4 вариантов, интервал 2 дня."
+frontend:
+  - task: "Синхронизация прогресса в Mini App (docs/sync.js + progress.js export/import)"
+    implemented: true
+    working: "NA"
+    file: "/app/docs/sync.js, /app/docs/progress.js"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        comment: "Пуш при каждом сохранении (debounce 1.5s), при visibilitychange, при старте — merge с сервера. Профиль: карточка profile-sync (sync-state / sync-sub / sync-now-button)."
+bot:
+  - task: "Презентация: welcome.png → текст → 4 инфографики (access/modules/inside/mentor × ru/uk/ar) → CTA, паузы 1.5с, эмодзи, без reply-клавиатуры"
+    implemented: true
+    working: true
+    file: "/app/bot/bot.py, /app/bot/promo/build.py, /app/bot/assets/*"
+    needs_retesting: false
+    status_history:
+      - working: true
+        comment: "Локальный прогон tests/test_bot_flow.py: 5 фото в каждом языке, caption ≤1024, эмодзи во всех кнопках. Живой тест в Telegram — за пользователем."
+metadata:
+  run_ui: true
+test_plan:
+  current_focus:
+    - "POST /api/progress/sync (merge, bad uid → 400, initData подпись)"
+    - "Mini App: карточка синхронизации в профиле, сохранение XP после урока/практики и восстановление после очистки localStorage"
+agent_communication:
+  - agent: "main"
+    message: "Тестировать backend /api/progress/* и фронтовую синхронизацию. Бот в Telegram не тестировать (нет доступа к аккаунту), логика проверена локально."

@@ -3,7 +3,12 @@
   const KEY = "va_progress";
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { return {}; } };
   const P = Object.assign({ done: {}, practice: {}, history: [], xp: 0, xpLog: [], streak: 0, lastDay: null, days: 0, ach: {}, last: null, lastStep: 0 }, load());
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(P)); } catch (e) {} };
+  let quiet = false; /* импорт с сервера не должен порождать обратный пуш */
+  const save = () => {
+    if (!quiet) P.updatedAt = Date.now();
+    try { localStorage.setItem(KEY, JSON.stringify(P)); } catch (e) {}
+    if (!quiet && window.VASyncPush) window.VASyncPush();
+  };
   const LEVELS = [0, 100, 300, 600, 1000];
   const today = () => new Date().toISOString().slice(0, 10);
   const events = []; /* очередь событий для UI: {type:"xp",n} | {type:"ach",id} | {type:"level",n} */
@@ -88,6 +93,20 @@
       return null;
     },
     events, touchDay,
-    reset() { Object.assign(P, { done: {}, practice: {}, history: [], xp: 0, xpLog: [], streak: 0, lastDay: null, days: 0, ach: {}, last: null, lastStep: 0 }); save(); }
+    /* обмен состоянием с сервером (sync.js) */
+    exportState() {
+      const out = {}; ["done", "practice", "history", "xp", "streak", "lastDay", "days", "ach", "last", "lastStep", "updatedAt"].forEach((k) => (out[k] = P[k]));
+      out.updatedAt = P.updatedAt || Date.now();
+      return out;
+    },
+    importState(s) {
+      if (!s) return false;
+      const snap = () => JSON.stringify([P.done, P.practice, P.xp, P.streak, P.days, P.ach, P.lastDay]);
+      const before = snap();
+      ["done", "practice", "history", "xp", "streak", "lastDay", "days", "ach", "last", "lastStep", "updatedAt"].forEach((k) => { if (s[k] !== undefined) P[k] = s[k]; });
+      quiet = true; save(); quiet = false;
+      return snap() !== before;
+    },
+    reset() { Object.assign(P, { done: {}, practice: {}, history: [], xp: 0, xpLog: [], streak: 0, lastDay: null, days: 0, ach: {}, last: null, lastStep: 0 }); quiet = true; save(); quiet = false; if (window.VASyncReset) window.VASyncReset(); }
   };
 })();

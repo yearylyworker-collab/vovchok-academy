@@ -1,0 +1,28 @@
+{
+  "summary": "Iteration 7 — server-side progress sync (XP/streak/achievements) verified end-to-end. Backend: 14/14 pytest cases passed in /app/backend/tests/test_progress_sync.py against public URL (validation, invalid init_data fallback, merge semantics, GET, reset). Frontend: profile-sync card, sync-state 'Синхронизировано ✓', sync-sub localized text, sync-now-button with toast 'Прогресс синхронизирован' all working. Cross-device restore E2E: markDone m1l1 → xp=20/streak=1/done={m1l1} pushed to server for uid web:8kggod8h7bomu83hwws → cleared localStorage (kept only va_sync_uid) → reload → state fully restored from server (xp=20, streak=1, done=[m1l1]). Language switching ru/uk/ar all localize sync card correctly; ar sets dir=rtl with no horizontal overflow (sw=cw=390). 0 page errors across home/learn/practice/community/profile.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_progress_sync.py",
+    "/app/test_reports/pytest/iter7_sync.xml",
+    "/app/test_reports/iteration_7.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "sync_store.merge_state: _merge_stamps takes min(cur, v) which means when both server and client have the same achievement, the earliest timestamp wins — correct for 'first-earned' semantics but should be documented (sync_store.py:32-38).",
+    "server.py:139 progress_sync response omits last_seen while progress_get returns it — asymmetric. Not a bug (client only needs merged state) but consider consistency for future clients.",
+    "sync.js:20-40 push() has a busy/again flip-flop but no exponential backoff on 'err' state — a persistently-down server will retry on every visibilitychange/schedule call. Consider capping retries or backing off (nice-to-have)."
+  ],
+  "updated_files": ["/app/backend/tests/test_progress_sync.py"],
+  "success_rate": {"backend": "100% (14/14)", "frontend": "100% (all acceptance checks: sync card, sync button+toast, cross-device restore, ru/uk/ar localization, RTL, 0 console errors)"},
+  "seed_data_creation": "Test progress documents created under uids like web:test-<uuid> and web:8kggod8h7bomu83hwws — safe, all prefixed 'web:' and isolated from real users. No cleanup needed (server has no unique quotas).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Bypass onboarding by setting BOTH localStorage.va_uid='tg' AND URL hash '#home' before reload — story.js:105 forces hash to '#s0' if it doesn't start with '#s' or '#home' etc, so va_uid alone is insufficient. Public backend URL: https://vovchok-mini.preview.emergentagent.com. UID prefix must be 'web:' and total length ≤64 chars (server.py:123). merge_state keeps max(xp/streak/days), unions done/ach/practice(with OR on ok), sorts+dedups history to last 500 by 'at'.",
+  "rca_of_issue": "N/A — feature works as designed. Manual reproduction of core acceptance scenario: (1) open Mini App as web user, (2) VAProgress.markDone('m1l1') → xp becomes 20, VASyncNow() POSTs {uid:'web:...', state:{...}} to /api/progress/sync → server merges & persists, (3) localStorage.clear() keeping only va_sync_uid, (4) reload → sync.js on-load push() gets merged state back from server → VAProgress.importState() rehydrates xp/done/streak. Verified state restored: xp=20, streak=1, done=['m1l1']."
+}

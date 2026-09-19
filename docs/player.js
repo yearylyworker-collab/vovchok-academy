@@ -184,6 +184,7 @@
        <div class="c2 wide" data-testid="profile-achievements"><div class="rowhead"><div><small>${VA.t("ach_title")}</small><b>${st.achievements} / ${st.achTotal}</b></div><button type="button" class="link" id="achAll" data-testid="profile-all-achievements">${showAllAch ? VA.t("hide") : VA.t("ach_all")} ›</button></div><div class="hexes">${hexes}</div>${showAllAch ? `<div class="alist" data-testid="achievements-list">${achList}</div>` : ""}</div>
        <div class="c2 wide" data-testid="profile-stats"><small>${VA.t("stats_title")}</small><div class="statgrid"><div><b data-testid="profile-lessons-done">${st.done}</b><small>${VA.t("st_lessons")}</small></div><div><b data-testid="profile-practices-ok">${st.answered}</b><small>${VA.t("st_practices")}</small></div><div><b data-testid="profile-accuracy">${st.accuracy}%</b><small>${VA.t("st_accuracy")}</small></div><div><b data-testid="profile-days">${st.days}</b><small>${VA.t("st_days")}</small></div></div></div>
        <div class="c2 wide" data-testid="profile-weak"><small>${VA.t("weak_title")}</small>${weak}</div>
+       <div class="c2 wide" data-testid="profile-sync"><span class="sico">☁</span><small>${VA.t("sync_title")}</small><b id="syncState" data-testid="sync-state">…</b><small id="syncSub" data-testid="sync-sub"></small><button type="button" class="btn btn-ghost" id="syncNow" data-testid="sync-now-button">${VA.t("sync_now")}</button></div>
        <div class="c2 wide" data-testid="lang-switcher"><span class="sico">🌐</span><small>${VA.t("lang_title")}</small><div class="lbtns">${langs}</div></div>
        ${nx ? `<button class="btn btn-primary glow" id="pfCont" data-testid="profile-continue-button" type="button">${VA.t("continue_learning")} →</button>` : `<p class="sub" data-testid="profile-complete">${VA.t("course_complete")}</p>`}
        <p class="motto">${VA.t("motto")}</p>${VA.disclaimer(true)}
@@ -193,7 +194,28 @@
     el.querySelectorAll(".lbtn").forEach((b) => (b.onclick = () => { VA.setLang(b.dataset.l); openProfile(showAllAch); }));
     el.querySelectorAll("[data-testid^=repeat-]").forEach((b) => (b.onclick = () => { screen("learn"); openLearn(+b.dataset.m); }));
     el.querySelector("#pfReset").onclick = () => { P().reset(); VA.toast(VA.t("reset_done")); openProfile(); };
+    const sn = el.querySelector("#syncNow");
+    if (sn) sn.onclick = async () => {
+      if (!window.VASyncNow) return VA.toast(VA.t("sync_local"));
+      sn.disabled = true;
+      await VASyncNow();
+      VA.toast(VA.t((window.VASync || {}).state === "ok" ? "sync_done_toast" : "sync_err"));
+    };
+    paintSync();
   }
+
+  /* строка статуса синхронизации в профиле (обновляется из sync.js) */
+  function paintSync() {
+    const el = VA.box("profile"); if (!el) return;
+    const a = el.querySelector("#syncState"), b = el.querySelector("#syncSub"); if (!a) return;
+    const s = window.VASync || { state: "local" };
+    const map = { ok: "sync_ok_short", sync: "sync_wait", idle: "sync_wait", err: "sync_err", local: "sync_local" };
+    a.textContent = VA.t(map[s.state] || "sync_local");
+    b.textContent = s.state === "ok" && s.at
+      ? VA.t(s.verified ? "sync_tg" : "sync_web") + " · " + VA.t("sync_at", { t: new Date(s.at).toLocaleTimeString(VA.lang() === "ar" ? "ar-EG" : VA.lang() === "uk" ? "uk-UA" : "ru-RU", { hour: "2-digit", minute: "2-digit" }) }) + " · " + VA.t("sync_ok")
+      : "";
+  }
+  window.VASyncPaint = paintSync;
 
   window.VAOpenHome = openHome; window.VAOpenLearn = () => openLearn(); window.VAOpenModule = openModule; window.VAOpenLesson = openLesson;
   window.VAOpenPractice = () => openPractice(); window.VAOpenProfile = () => openProfile();

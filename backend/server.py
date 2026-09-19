@@ -101,20 +101,87 @@ async def mentor_explain(body: ExplainIn):
 
 
 _bot_app = None
+_rem_task = None
+
+
+# ---------- Серверный прогресс (XP/серия/достижения) ----------
+import sync_store  # noqa: E402
+
+
+class SyncIn(_BM):
+    uid: str | None = None
+    init_data: str | None = None
+    lang: str = "ru"
+    state: dict = {}
+
+
+def _resolve_user(body: SyncIn):
+    u = sync_store.verify_init_data(body.init_data or "", os.environ.get("BOT_TOKEN", ""))
+    if u:
+        return f"tg:{u['id']}", int(u["id"]), u.get("lang")
+    uid = (body.uid or "").strip()
+    if not uid.startswith("web:") or len(uid) > 64:
+        raise HTTPException(400, "bad uid")
+    return uid, None, None
+
+
+@api_router.post("/progress/sync")
+async def progress_sync(body: SyncIn):
+    uid, chat_id, tg_lang = _resolve_user(body)
+    lang = body.lang if body.lang in ("ru", "uk", "ar") else (tg_lang if tg_lang in ("ru", "uk", "ar") else "ru")
+    doc = await db.progress.find_one({"_id": uid})
+    merged = sync_store.merge_state((doc or {}).get("state"), body.state or {})
+    now = datetime.now(timezone.utc)
+    upd = {"state": merged, "lang": lang, "last_seen": now, "updated_at": now}
+    if chat_id:
+        upd["chat_id"] = chat_id
+    await db.progress.update_one({"_id": uid}, {"$set": upd, "$setOnInsert": {"created_at": now, "remind_count": 0}}, upsert=True)
+    return {"uid": uid, "verified": bool(chat_id), "state": merged}
+
+
+@api_router.post("/progress/reset")
+async def progress_reset(body: SyncIn):
+    uid, _chat, _l = _resolve_user(body)
+    now = datetime.now(timezone.utc)
+    await db.progress.update_one({"_id": uid}, {"$set": {"state": {}, "last_seen": now, "updated_at": now}})
+    return {"uid": uid, "ok": True}
+
+
+@api_router.get("/progress/{uid}")
+async def progress_get(uid: str):
+    doc = await db.progress.find_one({"_id": uid})
+    if not doc:
+        raise HTTPException(404, "not found")
+    ls = doc.get("last_seen")
+    return {"uid": uid, "state": doc.get("state") or {}, "last_seen": ls.isoformat() if ls else None}
+
+
+async def _touch_user(user_id: int, lang: str):
+    """Активность в боте — чтобы напоминание не улетало тем, кто общается с Волчком."""
+    now = datetime.now(timezone.utc)
+    await db.progress.update_one(
+        {"_id": f"tg:{user_id}"},
+        {"$set": {"chat_id": int(user_id), "lang": lang if lang in ("ru", "uk", "ar") else "ru", "last_seen": now},
+         "$setOnInsert": {"created_at": now, "remind_count": 0, "state": {}}},
+        upsert=True,
+    )
 
 
 @app.on_event("startup")
 async def _start_bot():
     """Запускаем Telegram-бота (polling) внутри backend, если RUN_BOT=1 и задан BOT_TOKEN."""
-    global _bot_app
+    global _bot_app, _rem_task
     if os.environ.get("RUN_BOT") != "1" or not os.environ.get("BOT_TOKEN"):
         return
     try:
         import bot  # noqa: E402
+        import reminders  # noqa: E402
         from telegram import Update as _U
+        bot.ACTIVITY = _touch_user
         _bot_app = bot.build_application()
         await _bot_app.initialize(); await bot.post_init(_bot_app); await _bot_app.start()
         await _bot_app.updater.start_polling(allowed_updates=_U.ALL_TYPES, drop_pending_updates=True)
+        _rem_task = asyncio.create_task(reminders.reminder_loop(_bot_app.bot, db))
         logger.info("Telegram bot polling started")
     except Exception as e:  # noqa: BLE001
         logger.warning("bot not started: %s", e)
@@ -122,6 +189,8 @@ async def _start_bot():
 
 @app.on_event("shutdown")
 async def _stop_bot():
+    if _rem_task:
+        _rem_task.cancel()
     if _bot_app:
         try:
             await _bot_app.updater.stop(); await _bot_app.stop(); await _bot_app.shutdown()
