@@ -34,7 +34,8 @@ load_dotenv(Path(__file__).resolve().parent.parent / "backend" / ".env")
 TOKEN = os.environ["BOT_TOKEN"]
 log = logging.getLogger("vovchok.bot")
 APP_URL = os.environ.get("MINI_APP_URL", "https://yearylyworker-collab.github.io/vovchok-academy/").rstrip("/")
-APP_VER = os.environ.get("MINI_APP_VER", "v3")
+APP_VER = os.environ.get("MINI_APP_VER", "v4")
+CHANNEL_ID = os.environ.get("CHANNEL_ID", "").strip()  # @username или -100… ; бот должен быть админом канала
 PARTNER = "https://comfortrade.com/ru?pid=n2y7nshp"
 CHANNEL = "https://t.me/+LbZDg2Te0XE0OGJh"
 DM = "https://t.me/Vovchokvtrade"
@@ -43,7 +44,7 @@ LANGS = ("ru", "uk", "ar")
 
 def load_labels() -> dict:
     """Читает window.VA_TRADE_LABELS из trade-labels.js рядом с ботом."""
-    p = Path(__file__).with_name("trade-labels.js")
+    p = Path(__file__).resolve().parent.parent / "docs" / "trade-labels.js"
     try:
         src = p.read_text(encoding="utf-8")
         body = src[src.index("{"): src.rindex("}") + 1]
@@ -75,7 +76,7 @@ T = {
         "hint": "Коротко, как в уроке:\n• нет структуры — {wait}\n• {call} — только со структурой вверх\n• {put} — только со структурой вниз\n• цвет свечи ≠ тренд\n\nОткрой академию и пройди модуль 1.",
         "kb_app": "Академия",
         "kb_hint": "Подсказка",
-        "kb_lang": "Язык", "kb_quote": "Цитата дня", "thinking": "Волчок думает…", "quote_cap": "🐺 {q}\n\n— Волчок · VOVCHOK ACADEMY", "ai_off": "Наставник сейчас недоступен. Открой академию — там разбор в каждом уроке.",
+        "kb_lang": "Язык", "kb_quote": "Цитата дня", "check_sub": "Проверить подписку ✅", "sub_ok": "Вижу подписку — доступ открыт. Входи в академию.", "sub_no": "Подписки пока не вижу. Подпишись на канал и нажми «Проверить подписку» ещё раз.", "help": "Команды:\n/start — начать\n/academy — открыть академию\n/quote — цитата дня\n/hint — подсказка\n/lang — язык\n\nЛюбой вопрос по трейдингу — отвечу как наставник. Сигналов не даю.", "thinking": "Волчок думает…", "quote_cap": "🐺 {q}\n\n— Волчок · VOVCHOK ACADEMY", "ai_off": "Наставник сейчас недоступен. Открой академию — там разбор в каждом уроке.",
         "explain_call": "{call_full}. Это не кнопка «купи» — это решение, что цена будет выше к сроку. Без структуры вверх — не жми.",
         "explain_put": "{put_full}. Решение, что цена будет ниже к сроку. Без структуры вниз — не жми.",
         "explain_wait": "{wait_full}. Нет зоны, нет закрепления, пила — это тоже решение. Часто сильнее входа.",
@@ -93,7 +94,7 @@ T = {
         "hint": "Коротко, як в уроці:\n• немає структури — {wait}\n• {call} — лише зі структурою вгору\n• {put} — лише зі структурою вниз\n• колір свічки ≠ тренд\n\nВідкрий академію і пройди модуль 1.",
         "kb_app": "Академія",
         "kb_hint": "Підказка",
-        "kb_lang": "Мова", "kb_quote": "Цитата дня", "thinking": "Вовчик думає…", "quote_cap": "🐺 {q}\n\n— Вовчик · VOVCHOK ACADEMY", "ai_off": "Наставник зараз недоступний. Відкрий академію — там розбір у кожному уроці.",
+        "kb_lang": "Мова", "kb_quote": "Цитата дня", "check_sub": "Проверить подписку ✅", "sub_ok": "Вижу подписку — доступ открыт. Входи в академию.", "sub_no": "Подписки пока не вижу. Подпишись на канал и нажми «Проверить подписку» ещё раз.", "help": "Команды:\n/start — начать\n/academy — открыть академию\n/quote — цитата дня\n/hint — подсказка\n/lang — язык\n\nЛюбой вопрос по трейдингу — отвечу как наставник. Сигналов не даю.", "thinking": "Вовчик думає…", "quote_cap": "🐺 {q}\n\n— Вовчик · VOVCHOK ACADEMY", "ai_off": "Наставник зараз недоступний. Відкрий академію — там розбір у кожному уроці.",
         "explain_call": "{call_full}. Це не кнопка «купи» — це рішення, що ціна буде вищою до строку. Без структури вгору — не тисни.",
         "explain_put": "{put_full}. Рішення, що ціна буде нижчою до строку. Без структури вниз — не тисни.",
         "explain_wait": "{wait_full}. Немає зони, немає закріплення, пилка — це теж рішення. Часто сильніше за вхід.",
@@ -111,7 +112,7 @@ T = {
         "hint": "باختصار، كما في الدرس:\n• لا بنية — {wait}\n• {call} — فقط مع بنية صاعدة\n• {put} — فقط مع بنية هابطة\n• لون الشمعة ≠ الاتجاه\n\nافتح الأكاديمية وأنجز الوحدة 1.",
         "kb_app": "الأكاديمية",
         "kb_hint": "تلميح",
-        "kb_lang": "اللغة", "kb_quote": "اقتباس اليوم", "thinking": "فولتشوك يفكّر…", "quote_cap": "🐺 {q}\n\n— فولتشوك · VOVCHOK ACADEMY", "ai_off": "المرشد غير متاح الآن. افتح الأكاديمية — هناك تحليل في كل درس.",
+        "kb_lang": "اللغة", "kb_quote": "اقتباس اليوم", "check_sub": "التحقق من الاشتراك ✅", "sub_ok": "أرى الاشتراك — الوصول مفتوح. ادخل إلى الأكاديمية.", "sub_no": "لا أرى الاشتراك بعد. اشترك في القناة واضغط «التحقق من الاشتراك» مجدداً.", "help": "الأوامر:\n/start — البدء\n/academy — فتح الأكاديمية\n/quote — اقتباس اليوم\n/hint — تلميح\n/lang — اللغة\n\nأي سؤال عن التداول — أجيب كمرشد. لا أعطي إشارات.", "thinking": "فولتشوك يفكّر…", "quote_cap": "🐺 {q}\n\n— فولتشوك · VOVCHOK ACADEMY", "ai_off": "المرشد غير متاح الآن. افتح الأكاديمية — هناك تحليل في كل درس.",
         "explain_call": "{call_full}. ليس زر «اشترِ» — بل قرار أن السعر سيكون أعلى عند الانتهاء. بلا بنية صاعدة — لا تضغط.",
         "explain_put": "{put_full}. قرار أن السعر سيكون أدنى عند الانتهاء. بلا بنية هابطة — لا تضغط.",
         "explain_wait": "{wait_full}. لا منطقة، لا تثبيت، تذبذب — هذا قرار أيضاً. غالباً أقوى من الدخول.",
@@ -146,6 +147,7 @@ def lang_kb() -> InlineKeyboardMarkup:
 def app_kb(lang: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([
         [InlineKeyboardButton(tx(lang, "channel"), url=CHANNEL)],
+        *([[InlineKeyboardButton(tx(lang, "check_sub"), callback_data="sub:" + lang)]] if CHANNEL_ID else []),
         [InlineKeyboardButton(tx(lang, "open"), web_app=WebAppInfo(url=app_url(lang)))],
         [InlineKeyboardButton(tx(lang, "trade"), url=PARTNER)],
         [InlineKeyboardButton(tx(lang, "more"), callback_data="hint:" + lang)],
@@ -180,6 +182,27 @@ async def send_hello(msg, lang: str) -> None:
     await msg.reply_text(tx(lang, "menu_hint"), reply_markup=reply_kb(lang))
 
 
+async def is_subscribed(bot, user_id: int) -> bool:
+    if not CHANNEL_ID:
+        return True
+    try:
+        m = await bot.get_chat_member(CHANNEL_ID, user_id)
+        return m.status in ("member", "administrator", "creator")
+    except Exception as e:  # noqa: BLE001
+        log.warning("get_chat_member failed: %s", e)
+        return False
+
+
+async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.message:
+        lang = user_lang(update, context)
+        await update.message.reply_text("🐺 " + tx(lang, "help"), reply_markup=app_kb(lang))
+
+
+async def on_error(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    log.exception("bot error: %s", context.error)
+
+
 async def on_cb(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     q = update.callback_query
     if not q or not q.data:
@@ -191,6 +214,9 @@ async def on_cb(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         context.user_data["lang"] = lang
         if q.message:
             await send_hello(q.message, lang)
+    elif kind == "sub" and q.message:
+        ok = await is_subscribed(context.bot, q.from_user.id)
+        await q.message.reply_text("🐺 " + tx(lang, "sub_ok" if ok else "sub_no"), reply_markup=app_kb(lang))
     elif kind == "hint" and q.message:
         await q.message.reply_text("🐺\n\n" + tx(lang, "hint"), reply_markup=app_kb(lang))
 
@@ -251,8 +277,10 @@ async def post_init(app: Application) -> None:
 
 
 def build_application() -> Application:
-    application = Application.builder().token(TOKEN).post_init(post_init).build()
+    application = Application.builder().token(TOKEN).post_init(post_init).concurrent_updates(True).build()
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("help", help_cmd))
+    application.add_error_handler(on_error)
     application.add_handler(CommandHandler(["academy", "hint", "lang", "quote"], on_text))
     application.add_handler(CallbackQueryHandler(on_cb))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))

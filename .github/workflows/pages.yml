@@ -2,7 +2,7 @@ name: pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, emergent]
   workflow_dispatch:
 
 permissions:
@@ -30,8 +30,8 @@ jobs:
           STAMP=$(date -u +%Y%m%d-%H%M)
           SHORT=${GITHUB_SHA::7}
           VER="${STAMP}-${SHORT}"
-          find . -maxdepth 1 \( -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '.nojekyll' \) -exec cp {} dist/ \;
-          if [ -d assets ]; then cp -R assets dist/assets; fi
+          find docs -maxdepth 1 \( -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '.nojekyll' \) -exec cp {} dist/ \;
+          if [ -d docs/assets ]; then cp -R docs/assets dist/assets; fi
           if [ -f dist/index.html ]; then
             sed -i "s/[?]v=[A-Za-z0-9._-]*/?v=${VER}/g" dist/index.html
           fi

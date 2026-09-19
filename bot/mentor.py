@@ -16,7 +16,7 @@ LANG_NAME = {"ru": "русском", "uk": "украинском", "ar": "ара
 
 
 def _labels(lang: str) -> dict:
-    src = Path(__file__).with_name("trade-labels.js").read_text(encoding="utf-8")
+    src = (Path(__file__).resolve().parent.parent / "docs" / "trade-labels.js").read_text(encoding="utf-8")
     data = json.loads(src[src.index("{"): src.rindex("}") + 1])
     return data.get(lang) or data["ru"]
 

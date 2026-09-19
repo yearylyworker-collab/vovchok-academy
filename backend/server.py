@@ -54,7 +54,7 @@ async def get_status_checks():
 
 # ---------- Волчок-наставник (Claude) + бот в фоне ----------
 import sys, asyncio  # noqa: E402
-sys.path.insert(0, str(ROOT_DIR.parent / "miniapp"))
+sys.path.insert(0, str(ROOT_DIR.parent / "bot"))
 import mentor  # noqa: E402
 from pydantic import BaseModel as _BM  # noqa: E402
 from fastapi import HTTPException  # noqa: E402
@@ -113,7 +113,7 @@ async def _start_bot():
         import bot  # noqa: E402
         from telegram import Update as _U
         _bot_app = bot.build_application()
-        await _bot_app.initialize(); await _bot_app.start()
+        await _bot_app.initialize(); await bot.post_init(_bot_app); await _bot_app.start()
         await _bot_app.updater.start_polling(allowed_updates=_U.ALL_TYPES, drop_pending_updates=True)
         logger.info("Telegram bot polling started")
     except Exception as e:  # noqa: BLE001
@@ -134,7 +134,7 @@ app.include_router(api_router)
 
 # Preview of the static Telegram Mini App (source of truth: /app/miniapp, deployed to GitHub Pages)
 from fastapi.staticfiles import StaticFiles  # noqa: E402
-app.mount("/api/miniapp", StaticFiles(directory=str(ROOT_DIR.parent / "miniapp"), html=True), name="miniapp")
+app.mount("/api/miniapp", StaticFiles(directory=str(ROOT_DIR.parent / "docs"), html=True), name="miniapp")
 
 app.add_middleware(
     CORSMiddleware,

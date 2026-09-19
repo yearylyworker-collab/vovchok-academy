@@ -28,6 +28,12 @@ Source repo: https://github.com/yearylyworker-collab/vovchok-academy (Pages: htt
 - Client-spec redesign (iteration_4 passed): home hero + ring + accordion, Practice Lab (A/B/C/D, filters, weak topics, replay, XP), profile (XP/level/streak/achievements/stats/weak topics/lang), community (2 cards + banner). State in progress.js.
 - Claude Sonnet 4.6 mentor (iteration_5 passed): mentor.py (ask/explain/quote_card), backend /api/mentor/ask|explain (Mongo log mentor_messages), bot free-text answers + /quote Nano Banana card, bot runs inside backend (RUN_BOT=1). Mini App button "Спросить Волчка, почему". VA_API_URL in index.html for GitHub Pages.
 
+- Repo layout for GitHub: /app/docs = Mini App static (GitHub Pages source = /docs), /app/bot = bot.py + mentor.py, /app/.github/workflows/pages.yml publishes docs/ (branches main, emergent). Bot: /help, error handler, concurrent updates, optional real subscription check (CHANNEL_ID env → getChatMember), MINI_APP_URL currently points to preview for testing. Note: BotFather menu button URL overrides API (user must update in BotFather).
+
 ## Backlog
 - P1: Push files to user's GitHub repo (user does via "Save to GitHub" / copy `/app/miniapp/*` to repo root); real iPhone Telegram tap test by user.
 - P2: Server-side progress (Path B), more practice scenarios per module, sound/haptics via Telegram WebApp HapticFeedback.
+
+## Fork check (Sep 2026)
+- Post-fork smoke test passed: backend + bot polling running, /api/miniapp/ serves /app/docs, /api/mentor/* responds. No code changes needed.
+- Deployment reminder for user: Save to GitHub → enable Pages (source /docs); Publish backend; then set window.VA_API_URL in docs/index.html to published backend URL + "/api" and update MINI_APP_URL in backend/.env + BotFather menu button.
