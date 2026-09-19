@@ -1,0 +1,11 @@
+.chrome-title{background:linear-gradient(90deg,#7ad7ff,#ffffff,#2ea8ff,#7ad7ff);background-size:240% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:logoFlow 11s linear infinite}
+.chrome-title small{-webkit-text-fill-color:#8aa8c4;color:#8aa8c4}
+.logo-stage{position:relative;min-height:auto;margin:6px 0 12px;padding:18px 10px 14px;border-radius:22px;overflow:hidden;border:1px solid rgba(70,190,255,.28);background:radial-gradient(120% 80% at 50% 0%,rgba(46,168,255,.18),rgba(4,12,24,.62))}
+.logo-word{display:flex;justify-content:center;gap:2px;position:relative;z-index:1;padding-top:0}
+.logo-word b{font-size:clamp(22px,7vw,30px);font-weight:800;letter-spacing:.06em;line-height:1;background:linear-gradient(90deg,#5ad4ff,#ffffff,#2ea8ff,#5ad4ff);background-size:240% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:logoFlow 10s linear infinite;filter:drop-shadow(0 0 8px rgba(46,168,255,.28))}
+.logo-academy{display:block;text-align:center;margin-top:6px;font-size:11px;font-weight:700;letter-spacing:.36em;color:#9fdcff}
+.logo-sub{display:block;text-align:center;margin-top:8px;color:#9fdcff;font-size:11px;letter-spacing:.14em}
+.logo-walk,.logo-static{display:none!important}
+.hero{min-height:0;border:0;box-shadow:none;background:none}
+.hero-art,.hero-cap{display:none}
+@keyframes logoFlow{to{background-position:240% 0}}

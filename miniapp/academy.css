@@ -1,0 +1,68 @@
+/* academy.css — новые компоненты (практика, прогресс, дисклеймер, typing) + RTL-зеркалирование. */
+.lesson-html p,.lesson-html ul,.lesson-html ol{margin:6px 0}
+.lesson-html ul,.lesson-html ol{padding-inline-start:20px}
+.lesson-html b{color:#edf7ff}
+.lesson-html .case,.case{margin:10px 0;padding:10px 12px;border-radius:14px;border:1px dashed rgba(60,231,255,.35);background:rgba(20,50,90,.22);color:#cfe8ff;font-size:13.5px;line-height:1.45}
+.case b{display:block;color:#3ce7ff;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+.case p{margin:0}
+.dots{display:flex;justify-content:center;gap:6px;margin:10px 0 2px}
+.dots i{width:7px;height:7px;border-radius:50%;background:#12243c;border:1px solid rgba(60,231,255,.3)}
+.dots i.on{background:#3ce7ff;box-shadow:0 0 8px #3ce7ff}
+.dots i.done{background:#22c55e;border-color:#22c55e}
+.bubble.typing::after{content:"▍";color:#3ce7ff;animation:blink .8s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;font-size:11px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend .lg{width:14px;height:6px;border-radius:3px;display:inline-block}
+.lg-support{background:rgba(52,211,153,.6)}.lg-resistance{background:rgba(251,113,133,.6)}.lg-range{background:rgba(60,231,255,.5)}.lg-ma{background:rgba(255,213,106,.9);height:2px}
+.ticker b{color:#9fdcff;font-weight:700}
+.choice{min-height:52px;transition:.2s;-webkit-user-select:none;user-select:none}
+.choice.wait{border-color:#7ad7ea;color:#bfefff}
+.choice:disabled{opacity:.45}
+.choice.picked{opacity:1;outline:2px solid #fff;outline-offset:-2px}
+.choice.right{opacity:1;box-shadow:0 0 16px rgba(61,255,154,.55);border-color:#3dff9a}
+.feedback{margin-top:12px;padding:12px 14px;border-radius:16px;border:1px solid;animation:fadeIn .3s ease}
+.feedback.good{border-color:rgba(61,255,154,.55);background:rgba(34,197,94,.12)}
+.feedback.bad{border-color:rgba(251,113,133,.55);background:rgba(251,113,133,.1)}
+.feedback>b{font-size:16px;display:block;margin-bottom:4px}
+.feedback.good>b{color:#7dffc3}.feedback.bad>b{color:#fda4af}
+.feedback p{margin-top:8px;font-size:14px;line-height:1.45}
+.st-ok{color:#7dffc3}.st-bad{color:#fda4af}
+.mod.done .ico{background:rgba(34,197,94,.18);color:#7dffc3}
+.mod .st.is-done{color:#3dff9a}
+.grid2 div small{display:block;color:var(--muted);font-size:11px;margin-bottom:4px}
+.grid2 div b{font-size:18px}
+.modmap{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:8px 0 12px}
+.modmap i{display:grid;place-items:center;height:36px;border-radius:10px;font-style:normal;font-weight:800;font-size:12px;border:1px solid rgba(60,231,255,.2);background:rgba(8,20,42,.65);color:var(--muted)}
+.modmap i.part{border-color:#3ce7ff;color:#dff8ff}
+.modmap i.done{background:rgba(34,197,94,.22);border-color:#22c55e;color:#7dffc3}
+.disc{margin-top:14px;border:1px solid rgba(255,213,106,.35);border-radius:14px;padding:10px 12px;background:rgba(255,213,106,.06);font-size:12.5px;line-height:1.45;color:#e9dcb4}
+.disc summary{cursor:pointer;font-weight:700;color:#ffd56a;list-style:none;-webkit-user-select:none;user-select:none}
+.disc summary::-webkit-details-marker{display:none}
+.disc p{margin-top:8px}
+.flag{min-height:52px;font-size:13px;-webkit-user-select:none;user-select:none}
+.btn:disabled{opacity:.4;pointer-events:none}
+.btn,.mod,.choice,.flag,.nav a{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.scroll{overscroll-behavior:contain}
+.sub.lesson-html{word-break:break-word;overflow-wrap:anywhere}
+.h2{overflow-wrap:anywhere}
+
+/* ---------- RTL (арабский) ---------- */
+[dir=rtl]{direction:rtl}
+[dir=rtl] .mod,[dir=rtl] .menu button,[dir=rtl] .menu a{text-align:right}
+.mod .st,.chev{margin-left:0;margin-inline-start:auto}
+[dir=rtl] .bubble::before{left:auto;right:-6px;transform:rotate(-135deg)}
+[dir=rtl] .talk{flex-direction:row}
+[dir=rtl] .mod .st{display:inline-block;transform:scaleX(-1)}
+[dir=rtl] .mod .st.is-done{transform:none}
+[dir=rtl] .lesson-html ul,[dir=rtl] .lesson-html ol{padding-inline-start:20px;padding-left:0}
+[dir=rtl] .kicker,[dir=rtl] .h2,[dir=rtl] .sub,[dir=rtl] .muted,[dir=rtl] .case,[dir=rtl] .feedback{text-align:right}
+[dir=rtl] .brand,[dir=rtl] .h2.center{text-align:center}
+[dir=rtl] .moon{right:auto;left:28px}
+[dir=rtl] .radar{left:auto;right:4%}
+[dir=rtl] .btn-primary::after,[dir=rtl] .btn-ok::after{animation-direction:reverse}
+[dir=rtl] .bar>i{margin-inline-start:auto}
+/* a.btn имеет большую специфичность, чем .btn-primary — дублируем для ссылок */
+a.btn-primary{color:#041018;background:linear-gradient(90deg,#79f0ff,#2ea8ff,#6d7bff);box-shadow:0 8px 24px rgba(46,168,255,.38)}
+a.btn-ok{color:#04210f;background:linear-gradient(90deg,#7dffc3,#22c55e);box-shadow:0 8px 24px rgba(34,197,94,.38)}
+a.btn-ghost{border:1px solid rgba(60,231,255,.3);background:rgba(8,18,36,.55)}

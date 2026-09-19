@@ -1,0 +1,25 @@
+# Vovchok Academy — PRD
+
+## Original problem statement
+Telegram Mini App (static GitHub Pages, vanilla JS) + Python bot `bot.py`. Финальный план доводки: Фаза 0 (один источник контента) → 1 (наполнить 12 модулей) → 2 (ru/uk/ar + RTL) → 3 (настоящая практика) → 4 (профиль/прогресс) → 5 (живой проводник) → 6 (стабилизация, дисклеймер, бот, кэш).
+Source repo: https://github.com/yearylyworker-collab/vovchok-academy (Pages: https://yearylyworker-collab.github.io/vovchok-academy/). Test bot: @vovchok_academy_bot.
+
+## User choices
+- Languages all at once (ru/uk/ar parallel), translations done carefully, no external proofreading required
+- 3 lessons per module (m1 has 4) + practice each (m12 has 2 practices)
+- Bot verified live (getMe + polling start + menu button)
+
+## Architecture
+- `/app/miniapp/` — the whole Mini App (source of truth). Served for preview via FastAPI StaticFiles at `/api/miniapp/`.
+- Static includes in `index.html` (`?v=v3`); no pack.js / lessons-core.js duplicates (removed).
+- `content.js` VA_I18N (full UI, 3 langs) · `trade-labels.js` (shared labels, parsed also by bot.py) · `lessons-m1..m12.js` (50 items, 74 pages, 13 practices, all 3 langs) · `chart.js` (deterministic scenario charts) · `progress.js` (localStorage) · `player.js` · `app.js` · `story.js` (onboarding) · `boot.js` · `done-mark.js` · `icons.js` · `wolf.js` (moods) · `academy.css` + `motion.css` (RTL, animations) · `tools/check-i18n.js`.
+- `bot.py` — python-telegram-bot v21; labels from trade-labels.js; Mini App URL `?lang=<l>&v=v3`; 3 langs.
+
+## Implemented (2026-06)
+- Phase 0–6 complete: content consolidation, 12 modules filled, 3 languages + RTL, real practice with feedback, profile/progress/continue, guide moods + typing + transitions, disclaimer, bot updated, cache version v3, i18n completeness check (node script + runtime VA_MISSING).
+- Live UI pass (user feedback): animated background (particles/candles/aurora/grid), SVG nav icons, screen transitions/stagger, wolf on every screen with mood-driven mimics, community cards + rules.
+- Testing agent iteration_1: all passed, 0 console errors.
+
+## Backlog
+- P1: Push files to user's GitHub repo (user does via "Save to GitHub" / copy `/app/miniapp/*` to repo root); real iPhone Telegram tap test by user.
+- P2: Server-side progress (Path B), more practice scenarios per module, sound/haptics via Telegram WebApp HapticFeedback.

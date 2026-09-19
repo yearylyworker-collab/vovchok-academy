@@ -1,0 +1,48 @@
+name: pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pack static Mini App
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          STAMP=$(date -u +%Y%m%d-%H%M)
+          SHORT=${GITHUB_SHA::7}
+          VER="${STAMP}-${SHORT}"
+          find . -maxdepth 1 \( -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '.nojekyll' \) -exec cp {} dist/ \;
+          if [ -d assets ]; then cp -R assets dist/assets; fi
+          if [ -f dist/index.html ]; then
+            sed -i "s/[?]v=[A-Za-z0-9._-]*/?v=${VER}/g" dist/index.html
+          fi
+          printf '%s\n' "$VER" > dist/BUILD.txt
+          echo "deploy $VER"
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

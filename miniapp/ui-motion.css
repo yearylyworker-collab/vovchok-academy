@@ -1,0 +1,4 @@
+button,a.btn,.flag,.mod,.nav button,.choice,.input{touch-action:manipulation;pointer-events:auto}
+#fx,.veil,.radar,.glare,.city,.sky,.stars,.moon,.logo-stage{pointer-events:none}
+.btn-primary::after,.btn-ok::after,.nav-ico::after{pointer-events:none}
+.logo-word,.brand{direction:ltr}
