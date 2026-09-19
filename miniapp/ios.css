@@ -1,0 +1,10 @@
+/* iOS Telegram WebView: стабильная высота, без резинового скролла и случайного закрытия свайпом, чёткие тапы. */
+html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+#app{height:var(--vh,100dvh);min-height:var(--vh,100dvh)}
+.scroll,#story{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+.chips{touch-action:pan-x}
+.input{font-size:16px}
+button,a,.opt,.chip,.mod,.lrow,.flag,.lbtn,.card,.bhead{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.lesson-html,.sub,.bubble,.case,.feedback,.mbub,.quote{-webkit-user-select:text;user-select:text}
+/* backdrop-filter дорог на старых iPhone — облегчаем */
+@supports (-webkit-touch-callout:none){.sheet{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}.nav{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}.aurora i{filter:blur(24px)}}
