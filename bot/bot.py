@@ -259,8 +259,9 @@ async def is_subscribed(bot, user_id: int) -> bool:
         m = await bot.get_chat_member(CHANNEL_ID, user_id)
         return m.status in ("member", "administrator", "creator")
     except Exception as e:  # noqa: BLE001
-        log.warning("get_chat_member failed: %s", e)
-        return False
+        # Бот ещё не админ канала / неверный CHANNEL_ID — не блокируем учеников, только пишем в лог.
+        log.warning("get_chat_member failed (%s) — пропускаем проверку", e)
+        return True
 
 
 async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
