@@ -60,6 +60,14 @@
     disclaimer(short) {
       return `<details class="disc" data-testid="risk-disclaimer"${short ? "" : " open"}><summary>⚠️ ${VA.t("disclaimer_title")}</summary><p>${VA.t("disclaimer")}</p></details>`;
     },
+    /* Вибро-отклик через Telegram HapticFeedback (fallback — navigator.vibrate). kind: success | error | warning | light */
+    haptic(kind) {
+      try {
+        const H = window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback;
+        if (H) { if (kind === "light" || kind === "medium") H.impactOccurred(kind); else H.notificationOccurred(kind); return; }
+        if (navigator.vibrate) navigator.vibrate(kind === "error" ? [40, 60, 40] : kind === "success" ? [25, 40, 25] : 15);
+      } catch (e) {}
+    },
     toast(msg) {
       const el = document.getElementById("toast"); if (!el) return;
       el.textContent = msg; el.classList.add("on");

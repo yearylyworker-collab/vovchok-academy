@@ -89,6 +89,7 @@
       if (n >= 100) {
         clearInterval(iv);
         const ava = root.querySelector(".ava"); if (window.VASetMood) VASetMood(ava, "correct");
+        VA.haptic("success");
         localStorage.setItem("va_uid", localStorage.getItem("va_uid") || "tg");
         later(() => { location.hash = "#s3"; }, 700);
       }

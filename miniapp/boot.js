@@ -29,7 +29,7 @@
   /* Тапы: делегирование на document — надёжнее на iOS Telegram WebView, чем onclick на каждой ссылке. */
   document.addEventListener("click", (e) => {
     const a = e.target.closest(".nav a"); if (!a) return;
-    e.preventDefault();
+    e.preventDefault(); VA.haptic("light");
     const id = a.id.replace("n-", "");
     if (SCREENS.includes(id)) { history.replaceState(null, "", location.pathname + location.search + "#" + id); window.VAShow(id); }
   });

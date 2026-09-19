@@ -68,7 +68,7 @@
     el.querySelector("#nx").onclick = () => {
       dir = "next";
       if (!last) { page++; renderStory(); return; }
-      if (P().markDone(ls.id)) VA.toast(VA.t("lesson_done_toast"));
+      if (P().markDone(ls.id)) { VA.toast(VA.t("lesson_done_toast")); VA.haptic("success"); }
       if (cur.i + 1 < L(cur.m).length) openLesson(cur.m, cur.i + 1); else openModule(cur.m);
     };
   }
@@ -94,6 +94,7 @@
       const k = b.dataset.k, ok = k === ls.answer;
       el.querySelectorAll(".choice").forEach((x) => { x.disabled = true; x.classList.toggle("picked", x === b); x.classList.toggle("right", x.dataset.k === ls.answer); });
       P().setPractice(ls.id, ok);
+      VA.haptic(ok ? "success" : "error");
       const ava = el.querySelector(".ava"); if (window.VASetMood) VASetMood(ava, ok ? "correct" : "warning");
       fb.innerHTML = `<div class="feedback ${ok ? "good" : "bad"}" data-testid="practice-feedback">
         <b data-testid="practice-verdict">${ok ? "✓ " + VA.t("correct") : "✕ " + VA.t("wrong")}</b>
