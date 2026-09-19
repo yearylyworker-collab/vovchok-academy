@@ -1,0 +1,30 @@
+{
+  "summary": "Vovchok Academy full-redesign (Home / Practice Lab / Profile / Community) tested at mobile viewport 390x844 against https://vovchok-mini.preview.emergentagent.com/api/miniapp/. Mandatory §7 chain fully PASSES: bypass funnel → nav-practice → Task 1 (m1p): check-button correctly disabled before selection; selecting B then A cleanly swaps 'sel' class (B loses, A gets); Check → '✓ Верно!' verdict, A gets .right, feedback contains 'Почему', xp-float appears, options disabled after check, stat-solved=1 stat-accuracy=100%; practice-next-button reveals; Task 2 (m2p) shows 'Задача 2 из 13'; wrong choice A → '✕ Неверно', A .wrongpick + D .right, solved=2 accuracy=50%; profile shows XP=15 (5 practice + 10 first_step ach), practices-ok=2, accuracy=50%, weak-candles 0% / weak-trend 100% with repeat-* buttons; after reload (hash #profile) all values persist. Repeat note appears on re-open of already-correct m1p and NO additional XP is granted (15 → 15). Replay controls (play/pause/replay) exist and don't throw; scenario canvas is 290x204. Filters: trend cat shows 'из 3'; hard diff shows 'из 3'; candles+hard combo shows practice-empty; weak-button toggles on-weak and puts m2p first (weak candles). Home hero-title 'Привет, трейдер!', ring, progress text, 4 modules default → show-all toggles to 12 with text 'Свернуть'; module accordion & lesson buttons render. Home-continue opens next lesson correctly. Profile level 'Новичок' + '85 XP до следующего'; profile-all-achievements toggles 8-row list; UK switch (scoped to #profile) changes hero to 'Твій профіль' and nav to 'Головна' without reload; AR sets html dir=rtl. profile-reset-button clears XP to 0. Community: channel href https://t.me/+LbZDg2Te0XE0OGJh target=_blank; partner href https://comfortrade.com/ru?pid=n2y7nshp; ComfortTrade spelled correctly; banner present. tools/check-i18n.js exits 0 (lessons=50 pages=74 practices=13). document.documentElement.scrollWidth = 390 (no horizontal overflow). window.VA_MISSING = []. Zero console errors during the whole run.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": ["/app/test_reports/iteration_4.json"],
+  "action_items": [
+    "OPTIONAL / spec-vs-impl clarification: the review request note '(expect 5 + achievements? Первый шаг requires a lesson, so XP=5)' does not match implementation. In progress.js setPractice() marks P.done[practice_id] on first correct answer, so ACH first_step (test: s.done>=1) fires immediately after the first correct practice, adding +10 XP. Observed XP after 1st correct m1p = 15 (5 practice + 10 first_step). If the design intends first_step to unlock ONLY from real story lessons, gate its test on lessons of type 'story' (non-practice). Otherwise the current 15-XP behaviour is fine and the review note is stale — recommend updating the acceptance text.",
+    "MINOR test-hygiene: data-testid=\"hero-title\" is emitted by openHome / openLearn / openPractice / openProfile / openCommunity, so multiple rendered screens share the same testID. In practice only one screen has its .scroll populated at a time here so tests scoped to the active screen still pass, but consider making it unique per screen (home-hero-title, profile-hero-title, ...) for robustness.",
+    "MINOR: opening a lesson from the home accordion (lesson-m1l1-button) can leave the lesson scroll empty when done immediately after opening the accordion in the same tick — the very next click on home-continue-button renders it correctly. Not reproducible reliably; likely a render/animation timing edge case in player.js renderStory when the CSS .swap-next class is applied before the fresh innerHTML is committed. Watch if similar reports appear."
+  ],
+  "critical_code_review_comments": [
+    "progress.js setPractice() writes P.done[practice_id] on first correct answer (line 69). This is what pushes 'Первый шаг' achievement to fire on 1st correct practice — see action item above.",
+    "player.js:9 defines a *local* screen(id) that duplicates the .active-toggling logic from app.js VAShow but skips phase-academy/nav.show/story-overlay cleanup. Fine here because bypass-funnel path already has phase-academy set, but the two-source-of-truth is a latent hazard.",
+    "player.js openPractice() rebuilds queue on every filter change and resets lab.sel/lab.checked correctly. Re-render of the whole practice screen (not just the task div) on every chip click is a bit heavy but functionally correct.",
+    "Multiple screens emit data-testid=\"hero-title\" (player.js:14 and app.js:120). Consider per-screen unique IDs.",
+    "practice-bank.js keys verified against /app/miniapp/practice-bank.js: A/D/D/B/D/B/B/C/D/A/B/A/D — matches the review request exactly."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "seed_data_creation": "None. All tests used localStorage.clear() + va_uid='demo' to bypass the funnel.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Bypass funnel with: localStorage.clear(); localStorage.setItem('va_uid','demo'); location.hash='#home'; then reload. Practice keys map (A=call, B=put, C=wait/confirm, D=wait/skip). ACH first_step fires on first correct practice too because setPractice sets P.done[id]. hero-title testID is duplicated across screens — scope selectors to '#profile [data-testid=...]' etc. when confirming language switches on non-home screens.",
+  "rca_of_issue": "N/A — no defects that block acceptance."
+}

@@ -50,21 +50,36 @@
     cv.style.width = w + "px"; cv.style.height = h + "px"; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
     const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
     const rtl = false; /* ось времени всегда слева направо */
-    const { candles, zone, ma } = build(spec);
-    const n = candles.length, pad = 6;
+    const built = build(spec), zone = built.zone, ma = built.ma;
+    const total = built.candles.length, shown = Math.max(2, Math.min(total, spec.count || total));
+    const candles = built.candles.slice(0, shown);
+    const n = total, pad = 6, axisW = spec.axis ? 34 : 0;
     let lo = Infinity, hi = -Infinity;
     candles.forEach((c) => { lo = Math.min(lo, c.l); hi = Math.max(hi, c.h); });
     if (zone) { lo = Math.min(lo, zone.lo); hi = Math.max(hi, zone.hi); }
     lo -= 3; hi += 3;
     const y = (v) => h - pad - ((v - lo) / (hi - lo)) * (h - pad * 2);
-    const slot = (w - 12) / (n + 1), bw = Math.max(3.5, slot * 0.62);
+    const slot = (w - 12 - axisW) / (n + 1), bw = Math.max(3.5, slot * 0.62);
     const xAt = (i) => { const x = 8 + i * slot; return rtl ? w - x - bw : x; };
+    if (spec.axis) {
+      g.fillStyle = "rgba(160,200,230,.55)"; g.font = "600 9px system-ui,sans-serif"; g.textAlign = "left";
+      const base = 1.09, step = (hi - lo) / 4;
+      for (let k = 0; k <= 4; k++) { const v = lo + step * k; g.fillText((base + v / 4000).toFixed(4), w - axisW + 4, y(v) + 3); }
+      g.strokeStyle = "rgba(60,231,255,.12)"; g.beginPath(); g.moveTo(w - axisW, 0); g.lineTo(w - axisW, h); g.stroke();
+    }
     g.strokeStyle = "rgba(60,231,255,.07)"; g.lineWidth = 1;
     for (let k = 1; k < 5; k++) { g.beginPath(); g.moveTo(0, (h / 5) * k); g.lineTo(w, (h / 5) * k); g.stroke(); }
+    if (spec.axis) { g.fillStyle = "rgba(160,200,230,.45)"; g.font = "600 9px system-ui,sans-serif"; g.textAlign = "center"; ["12:00", "18:00", "00:00", "06:00"].forEach((t, k) => g.fillText(t, ((w - axisW) / 4) * k + (w - axisW) / 8, h - 2)); }
     if (zone) {
       g.fillStyle = zone.kind === "support" ? "rgba(52,211,153,.14)" : zone.kind === "resistance" ? "rgba(251,113,133,.14)" : "rgba(60,231,255,.10)";
-      if (zone.kind === "range") { g.fillRect(0, y(zone.hi) - 3, w, 6); g.fillRect(0, y(zone.lo) - 3, w, 6); }
-      else g.fillRect(0, y(zone.hi), w, Math.max(4, y(zone.lo) - y(zone.hi)));
+      const zw = w - axisW;
+      if (zone.kind === "range") { g.fillRect(0, y(zone.hi) - 3, zw, 6); g.fillRect(0, y(zone.lo) - 3, zw, 6); }
+      else g.fillRect(0, y(zone.hi), zw, Math.max(4, y(zone.lo) - y(zone.hi)));
+      if (spec.axis && window.VA) {
+        g.fillStyle = zone.kind === "support" ? "rgba(52,211,153,.9)" : zone.kind === "resistance" ? "rgba(251,113,133,.9)" : "rgba(120,225,255,.9)";
+        g.font = "700 10px system-ui,sans-serif"; g.textAlign = "left";
+        g.fillText(VA.t("chart_zone_" + zone.kind), 6, (zone.kind === "support" ? y(zone.lo) + 12 : y(zone.hi) - 5));
+      }
     }
     if (ma) {
       g.strokeStyle = "rgba(255,213,106,.85)"; g.lineWidth = 1.6; g.beginPath();
@@ -72,7 +87,7 @@
       g.stroke();
     }
     candles.forEach((c, i) => {
-      const x = xAt(i), up = c.c >= c.o, lastOne = i === n - 1;
+      const x = xAt(i), up = c.c >= c.o, lastOne = i === shown - 1;
       const col = up ? "#34d399" : "#fb7185";
       g.strokeStyle = col; g.fillStyle = col; g.lineWidth = lastOne ? 1.8 : 1.15;
       g.beginPath(); g.moveTo(x + bw / 2, y(c.h)); g.lineTo(x + bw / 2, y(c.l)); g.stroke();
@@ -80,9 +95,9 @@
       g.fillRect(x, top, bw, Math.max(2, bot - top));
       if (lastOne) { g.strokeStyle = "rgba(255,255,255,.7)"; g.lineWidth = 1; g.strokeRect(x - 2.5, y(c.h) - 3, bw + 5, y(c.l) - y(c.h) + 6); }
     });
-    if (spec.question) {
+    if (spec.question && shown === total) {
       const x = rtl ? 10 : w - 24;
-      g.fillStyle = "rgba(60,231,255,.9)"; g.font = "800 15px system-ui,sans-serif"; g.fillText("?", x, y(candles[n - 1].c) - 10);
+      g.fillStyle = "rgba(60,231,255,.9)"; g.font = "800 15px system-ui,sans-serif"; g.textAlign = "left"; g.fillText("?", x - axisW, y(candles[shown - 1].c) - 10);
     }
   }
   function legend(spec) {
@@ -99,9 +114,25 @@
     },
     mount(root, spec) {
       const cv = (root || document).querySelector("canvas.scene"); if (!cv) return;
-      const paint = () => draw(cv, spec);
+      const paint = () => draw(cv, cv._spec || spec);
+      cv._spec = spec;
       requestAnimationFrame(paint);
       if (!cv._ro && window.ResizeObserver) { cv._ro = new ResizeObserver(paint); cv._ro.observe(cv.parentElement); }
+    },
+    /* Replay: свечи появляются по одной. Возвращает контроллер {play,pause,replay,playing}. */
+    replay(root, spec, onDone) {
+      const cv = (root || document).querySelector("canvas.scene"); if (!cv) return null;
+      const total = spec.n || 26; let count = 3, timer = 0;
+      const ctl = { playing: false,
+        step() { count = Math.min(total, count + 1); cv._spec = { ...spec, count }; draw(cv, cv._spec); if (count >= total) { ctl.pause(); onDone && onDone(); } },
+        play() { if (ctl.playing || count >= total) return; ctl.playing = true; timer = setInterval(ctl.step, 90); },
+        pause() { ctl.playing = false; clearInterval(timer); },
+        replay() { ctl.pause(); count = 3; cv._spec = { ...spec, count }; draw(cv, cv._spec); ctl.play(); },
+        finish() { ctl.pause(); count = total; cv._spec = { ...spec, count }; draw(cv, cv._spec); } };
+      cv._spec = { ...spec, count }; requestAnimationFrame(() => draw(cv, cv._spec));
+      if (!cv._ro && window.ResizeObserver) { cv._ro = new ResizeObserver(() => draw(cv, cv._spec)); cv._ro.observe(cv.parentElement); }
+      if (document.documentElement.classList.contains("lite")) ctl.finish(); else ctl.play();
+      return ctl;
     },
     patterns: Object.keys(PATTERNS)
   };

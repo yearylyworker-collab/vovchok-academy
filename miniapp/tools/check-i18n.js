@@ -6,7 +6,7 @@ const ROOT = path.join(__dirname, "..");
 const LANGS = ["ru", "uk", "ar"];
 const ctx = { window: {} }; ctx.window = ctx;
 vm.createContext(ctx);
-["content.js", "trade-labels.js", ...Array.from({ length: 12 }, (_, i) => `lessons-m${i + 1}.js`)].forEach((f) => {
+["content.js", "content-lab.js", "trade-labels.js", ...Array.from({ length: 12 }, (_, i) => `lessons-m${i + 1}.js`)].forEach((f) => {
   vm.runInContext(fs.readFileSync(path.join(ROOT, f), "utf8"), ctx, { filename: f });
 });
 const problems = [];

@@ -8,7 +8,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 ROOT_DIR = Path(__file__).parent
@@ -52,7 +52,84 @@ async def get_status_checks():
     status_checks = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**status_check) for status_check in status_checks]
 
-# Include the router in the main app
+# ---------- Волчок-наставник (Claude) + бот в фоне ----------
+import sys, asyncio  # noqa: E402
+sys.path.insert(0, str(ROOT_DIR.parent / "miniapp"))
+import mentor  # noqa: E402
+from pydantic import BaseModel as _BM  # noqa: E402
+from fastapi import HTTPException  # noqa: E402
+
+
+class AskIn(_BM):
+    lang: str = "ru"
+    question: str
+    session: str | None = None
+
+
+class ExplainIn(_BM):
+    lang: str = "ru"
+    scenario: str
+    chosen: str
+    correct: str
+    base_explain: str = ""
+    task_id: str | None = None
+    session: str | None = None
+
+
+async def _log_mentor(kind: str, payload: dict, answer: str):
+    await db.mentor_messages.insert_one({"kind": kind, **payload, "answer": answer, "at": datetime.now(timezone.utc).isoformat()})
+
+
+@api_router.post("/mentor/ask")
+async def mentor_ask(body: AskIn):
+    if not mentor.KEY:
+        raise HTTPException(503, "mentor disabled")
+    lang = body.lang if body.lang in ("ru", "uk", "ar") else "ru"
+    answer = await mentor.ask(lang, body.question, body.session)
+    await _log_mentor("ask", {"lang": lang, "question": body.question[:1500], "session": body.session}, answer)
+    return {"answer": answer}
+
+
+@api_router.post("/mentor/explain")
+async def mentor_explain(body: ExplainIn):
+    if not mentor.KEY:
+        raise HTTPException(503, "mentor disabled")
+    lang = body.lang if body.lang in ("ru", "uk", "ar") else "ru"
+    answer = await mentor.explain(lang, body.scenario, body.chosen, body.correct, body.base_explain, body.session)
+    await _log_mentor("explain", {"lang": lang, "task_id": body.task_id, "chosen": body.chosen, "correct": body.correct, "session": body.session}, answer)
+    return {"answer": answer}
+
+
+_bot_app = None
+
+
+@app.on_event("startup")
+async def _start_bot():
+    """Запускаем Telegram-бота (polling) внутри backend, если RUN_BOT=1 и задан BOT_TOKEN."""
+    global _bot_app
+    if os.environ.get("RUN_BOT") != "1" or not os.environ.get("BOT_TOKEN"):
+        return
+    try:
+        import bot  # noqa: E402
+        from telegram import Update as _U
+        _bot_app = bot.build_application()
+        await _bot_app.initialize(); await _bot_app.start()
+        await _bot_app.updater.start_polling(allowed_updates=_U.ALL_TYPES, drop_pending_updates=True)
+        logger.info("Telegram bot polling started")
+    except Exception as e:  # noqa: BLE001
+        logger.warning("bot not started: %s", e)
+
+
+@app.on_event("shutdown")
+async def _stop_bot():
+    if _bot_app:
+        try:
+            await _bot_app.updater.stop(); await _bot_app.stop(); await _bot_app.shutdown()
+        except Exception:  # noqa: BLE001
+            pass
+
+
+# Include the router in the main app (после всех маршрутов)
 app.include_router(api_router)
 
 # Preview of the static Telegram Mini App (source of truth: /app/miniapp, deployed to GitHub Pages)

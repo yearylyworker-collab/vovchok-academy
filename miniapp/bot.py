@@ -3,6 +3,12 @@ import json
 import os
 import re
 from pathlib import Path
+import logging
+
+try:
+    import mentor  # Claude + Nano Banana (нужен EMERGENT_LLM_KEY)
+except Exception:  # noqa: BLE001
+    mentor = None
 
 from telegram import (
     Update,
@@ -22,7 +28,11 @@ from telegram.ext import (
     filters,
 )
 
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).with_name(".env"))
+load_dotenv(Path(__file__).resolve().parent.parent / "backend" / ".env")
 TOKEN = os.environ["BOT_TOKEN"]
+log = logging.getLogger("vovchok.bot")
 APP_URL = os.environ.get("MINI_APP_URL", "https://yearylyworker-collab.github.io/vovchok-academy/").rstrip("/")
 APP_VER = os.environ.get("MINI_APP_VER", "v3")
 PARTNER = "https://comfortrade.com/ru?pid=n2y7nshp"
@@ -65,7 +75,7 @@ T = {
         "hint": "Коротко, как в уроке:\n• нет структуры — {wait}\n• {call} — только со структурой вверх\n• {put} — только со структурой вниз\n• цвет свечи ≠ тренд\n\nОткрой академию и пройди модуль 1.",
         "kb_app": "Академия",
         "kb_hint": "Подсказка",
-        "kb_lang": "Язык",
+        "kb_lang": "Язык", "kb_quote": "Цитата дня", "thinking": "Волчок думает…", "quote_cap": "🐺 {q}\n\n— Волчок · VOVCHOK ACADEMY", "ai_off": "Наставник сейчас недоступен. Открой академию — там разбор в каждом уроке.",
         "explain_call": "{call_full}. Это не кнопка «купи» — это решение, что цена будет выше к сроку. Без структуры вверх — не жми.",
         "explain_put": "{put_full}. Решение, что цена будет ниже к сроку. Без структуры вниз — не жми.",
         "explain_wait": "{wait_full}. Нет зоны, нет закрепления, пила — это тоже решение. Часто сильнее входа.",
@@ -83,7 +93,7 @@ T = {
         "hint": "Коротко, як в уроці:\n• немає структури — {wait}\n• {call} — лише зі структурою вгору\n• {put} — лише зі структурою вниз\n• колір свічки ≠ тренд\n\nВідкрий академію і пройди модуль 1.",
         "kb_app": "Академія",
         "kb_hint": "Підказка",
-        "kb_lang": "Мова",
+        "kb_lang": "Мова", "kb_quote": "Цитата дня", "thinking": "Вовчик думає…", "quote_cap": "🐺 {q}\n\n— Вовчик · VOVCHOK ACADEMY", "ai_off": "Наставник зараз недоступний. Відкрий академію — там розбір у кожному уроці.",
         "explain_call": "{call_full}. Це не кнопка «купи» — це рішення, що ціна буде вищою до строку. Без структури вгору — не тисни.",
         "explain_put": "{put_full}. Рішення, що ціна буде нижчою до строку. Без структури вниз — не тисни.",
         "explain_wait": "{wait_full}. Немає зони, немає закріплення, пилка — це теж рішення. Часто сильніше за вхід.",
@@ -101,7 +111,7 @@ T = {
         "hint": "باختصار، كما في الدرس:\n• لا بنية — {wait}\n• {call} — فقط مع بنية صاعدة\n• {put} — فقط مع بنية هابطة\n• لون الشمعة ≠ الاتجاه\n\nافتح الأكاديمية وأنجز الوحدة 1.",
         "kb_app": "الأكاديمية",
         "kb_hint": "تلميح",
-        "kb_lang": "اللغة",
+        "kb_lang": "اللغة", "kb_quote": "اقتباس اليوم", "thinking": "فولتشوك يفكّر…", "quote_cap": "🐺 {q}\n\n— فولتشوك · VOVCHOK ACADEMY", "ai_off": "المرشد غير متاح الآن. افتح الأكاديمية — هناك تحليل في كل درس.",
         "explain_call": "{call_full}. ليس زر «اشترِ» — بل قرار أن السعر سيكون أعلى عند الانتهاء. بلا بنية صاعدة — لا تضغط.",
         "explain_put": "{put_full}. قرار أن السعر سيكون أدنى عند الانتهاء. بلا بنية هابطة — لا تضغط.",
         "explain_wait": "{wait_full}. لا منطقة، لا تثبيت، تذبذب — هذا قرار أيضاً. غالباً أقوى من الدخول.",
@@ -146,7 +156,7 @@ def reply_kb(lang: str) -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup([
         [KeyboardButton(tx(lang, "kb_app"))],
         [KeyboardButton(lb(lang, "call")), KeyboardButton(lb(lang, "put")), KeyboardButton(lb(lang, "wait"))],
-        [KeyboardButton(tx(lang, "kb_hint")), KeyboardButton(tx(lang, "kb_lang"))],
+        [KeyboardButton(tx(lang, "kb_hint")), KeyboardButton(tx(lang, "kb_quote")), KeyboardButton(tx(lang, "kb_lang"))],
     ], resize_keyboard=True)
 
 
@@ -185,6 +195,34 @@ async def on_cb(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await q.message.reply_text("🐺\n\n" + tx(lang, "hint"), reply_markup=app_kb(lang))
 
 
+async def send_quote(msg, lang: str) -> None:
+    if not mentor or not mentor.KEY:
+        return await msg.reply_text("🐺 " + tx(lang, "ai_off"))
+    await msg.chat.send_action("upload_photo")
+    try:
+        q, img = await mentor.quote_card(lang)
+        cap = tx(lang, "quote_cap").format(q=q)
+        if img:
+            await msg.reply_photo(photo=img, caption=cap)
+        else:
+            await msg.reply_text(cap)
+    except Exception as e:  # noqa: BLE001
+        log.warning("quote failed: %s", e)
+        await msg.reply_text("🐺 " + tx(lang, "ai_off"))
+
+
+async def mentor_answer(msg, lang: str, question: str) -> None:
+    if not mentor or not mentor.KEY:
+        return await msg.reply_text("🐺 " + tx(lang, "fallback"), reply_markup=app_kb(lang))
+    await msg.chat.send_action("typing")
+    try:
+        answer = await mentor.ask(lang, question, session=f"tg-{msg.chat_id}")
+        await msg.reply_text("🐺 " + answer, reply_markup=app_kb(lang))
+    except Exception as e:  # noqa: BLE001
+        log.warning("mentor failed: %s", e)
+        await msg.reply_text("🐺 " + tx(lang, "ai_off"), reply_markup=app_kb(lang))
+
+
 async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.message or not update.message.text:
         return
@@ -198,10 +236,12 @@ async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             return await update.message.reply_text("🐺\n\n" + tx(lang, "hint"), reply_markup=app_kb(lang))
         if text == tx(l, "kb_lang") or text == "/lang":
             return await update.message.reply_text(tx(lang, "choose"), reply_markup=lang_kb())
+        if text == tx(l, "kb_quote") or text == "/quote":
+            return await send_quote(update.message, lang)
         for kind in ("call", "put", "wait"):
             if text == lb(l, kind):
                 return await update.message.reply_text("🐺 " + tx(lang, "explain_" + kind), reply_markup=app_kb(lang))
-    await update.message.reply_text("🐺 " + tx(lang, "fallback"), reply_markup=app_kb(lang))
+    await mentor_answer(update.message, lang, text)
 
 
 async def post_init(app: Application) -> None:
@@ -210,12 +250,17 @@ async def post_init(app: Application) -> None:
     )
 
 
-def main() -> None:
+def build_application() -> Application:
     application = Application.builder().token(TOKEN).post_init(post_init).build()
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler(["academy", "hint", "lang"], on_text))
+    application.add_handler(CommandHandler(["academy", "hint", "lang", "quote"], on_text))
     application.add_handler(CallbackQueryHandler(on_cb))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
+    return application
+
+
+def main() -> None:
+    application = build_application()
     webhook = os.environ.get("WEBHOOK_URL", "").strip().rstrip("/")
     if webhook:
         path = os.environ.get("WEBHOOK_PATH", "tg").strip("/")

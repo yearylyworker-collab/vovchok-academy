@@ -1,7 +1,9 @@
 /* VOVCHOK ACADEMY — ядро: язык, RTL, i18n, оболочка экранов. */
 (() => {
   const LANGS = ["ru", "uk", "ar"];
-  const CFG = { partner: "https://comfortrade.com/ru?pid=n2y7nshp", dm: "https://t.me/Vovchokvtrade", channel: "https://t.me/+LbZDg2Te0XE0OGJh" };
+  /* API наставника: window.VA_API_URL (index.html) для GitHub Pages; в превью — тот же origin */
+  const API = window.VA_API_URL || (location.pathname.indexOf("/api/miniapp") === 0 ? location.origin + "/api" : "");
+  const CFG = { api: API, partner: "https://comfortrade.com/ru?pid=n2y7nshp", dm: "https://t.me/Vovchokvtrade", channel: "https://t.me/+LbZDg2Te0XE0OGJh" };
   const store = {
     get: (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
     set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -68,6 +70,12 @@
         if (navigator.vibrate) navigator.vibrate(kind === "error" ? [40, 60, 40] : kind === "success" ? [25, 40, 25] : 15);
       } catch (e) {}
     },
+    /* Запрос к Волчку-наставнику (Claude). Возвращает текст или бросает ошибку. */
+    async mentor(path, body) {
+      const r = await fetch(CFG.api + "/mentor/" + path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lang: VA.lang(), ...body }) });
+      if (!r.ok) throw new Error("mentor " + r.status);
+      return (await r.json()).answer;
+    },
     toast(msg) {
       const el = document.getElementById("toast"); if (!el) return;
       el.textContent = msg; el.classList.add("on");
@@ -110,40 +118,24 @@
   }
   window.VAShow = show;
 
-  function paintHome() {
-    const box = VA.box("home"); if (!box) return;
-    const P = window.VAProgress, st = P ? P.stats() : { done: 0, total: 0, pct: 0 };
-    const nx = P ? P.next() : null;
-    const cta = nx && st.done > 0
-      ? `<button class="btn btn-primary" id="homeContinue" data-testid="home-continue-button" type="button">${VA.t("continue_btn", { title: VA.txt(nx.ls.title, nx.ls.id) })}</button>`
-      : `<button class="btn btn-primary" id="toLearn" data-testid="home-to-learn-button" type="button">${VA.t("to_learn")}</button>`;
-    box.innerHTML = VA.frame(
-      VA.talk(VA.t("home_talk"), st.pct === 100 ? "mastered" : st.done > 0 ? "calm" : "welcome", "home-wolf-bubble") +
-      (window.VALogo ? VALogo(VA.t("nav_home")) : "") +
-      `<h2 class="h2">${VA.t("slogan")}</h2>
-       <p class="sub">${VA.t("home_sub")}</p>
-       <div class="bar" data-testid="home-progress-bar"><i style="width:${st.pct}%"></i></div>
-       <div class="muted" data-testid="home-progress-text">${VA.t("home_progress", st)}</div>
-       ${cta}
-       ${VA.disclaimer(true)}`
-    );
-    const c = box.querySelector("#homeContinue"); if (c) c.onclick = () => window.VAOpenLesson && VAOpenLesson(nx.m, nx.i);
-    const l = box.querySelector("#toLearn"); if (l) l.onclick = () => show("learn");
-    VA.type(box);
-  }
+  function paintHome() { if (window.VAOpenHome) VAOpenHome(); }
 
   window.VAOpenCommunity = function () {
     const el = VA.box("community"); if (!el) return;
-    const card = (cls, icon, title, desc, href, tid) => `<a class="card ${cls}" data-testid="${tid}" href="${href}" target="_blank" rel="noopener"><span class="cico">${VA.icon(icon)}</span><span><b>${title}</b><small>${desc}</small></span><span class="go">${VA.t("open_link")}${VA.icon("chev")}</span></a>`;
-    el.innerHTML = VA.frame(VA.talk(VA.t("community_talk"), "welcome", "community-wolf-bubble") +
-      `<div class="kicker">${VA.t("nav_community")}</div><h2 class="h2">${VA.t("community")}</h2><p class="sub">${VA.t("community_sub")}</p>
-       <div class="cards" data-testid="community-cards">
-         ${card("c-channel", "channel", VA.t("channel"), VA.t("community_channel_desc"), CFG.channel, "community-channel-link")}
-         ${card("c-dm", "dm", VA.t("dm"), VA.t("community_dm_desc"), CFG.dm, "community-dm-link")}
-         ${card("c-partner", "partner", VA.t("community_partner"), VA.t("community_partner_desc"), CFG.partner, "community-partner-link")}
-       </div>
-       <div class="rules" data-testid="community-rules"><b>${VA.icon("rules")}${VA.t("community_rules")}</b><ul><li>${VA.t("community_rule_1")}</li><li>${VA.t("community_rule_2")}</li><li>${VA.t("community_rule_3")}</li></ul></div>
-       ${VA.disclaimer(true)}`);
+    const big = (cls, icon, kicker, title, desc, href, cta, tid) => `<div class="bigcard ${cls}" data-testid="${tid}-card"><a class="bhead" href="${href}" target="_blank" rel="noopener" data-testid="${tid}-head"><span class="bico">${icon}</span><div><small>${kicker}</small><b>${title}</b><p>${desc}</p></div><span class="st">›</span></a><a class="btn btn-primary glow" data-testid="${tid}-link" href="${href}" target="_blank" rel="noopener">${cta}</a></div>`;
+    const tg = `<svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M21.5 4.5 3 11l7 2.5L12.5 21l9-16.5z"/></svg>`;
+    const ct = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6-5 6 5 6"/><path d="m15 6 5 6-5 6"/></svg>`;
+    el.innerHTML = VA.frame(`<div class="hero-b hero-c"><div class="hart"><i class="mtn"></i><i class="mtn m2"></i><i class="hmoon"></i>${VAWolf("welcome").replace('class="ava', 'class="ava hero-wolf')}</div><h1 class="h1" data-testid="hero-title">${VA.t("community")}</h1><p class="hero-sub accent">${VA.t("community_hero")}</p><p class="hero-sub">${VA.t("community_hero_sub")}</p><span class="tag script">${VA.t("community_tag")}</span></div>` +
+      VA.talk(VA.t("community_talk"), "welcome", "community-wolf-bubble") +
+      big("c-tg", tg, VA.t("official_channel"), "VOVCHOK ACADEMY", VA.t("channel_desc"), CFG.channel, VA.t("go_channel"), "community-channel") +
+      big("c-ct", ct, VA.t("our_partner"), "ComfortTrade", VA.t("partner_desc"), CFG.partner, VA.t("go_partner"), "community-partner") +
+      `<div class="banner" data-testid="community-banner"><i class="mtn"></i><i class="mtn m2"></i><i class="hmoon"></i>${VAWolf("calm").replace('class="ava', 'class="ava banner-wolf')}<p>«${VA.t("community_quote")}»</p><span class="script">Vovchok</span></div>${VA.disclaimer(true)}`);
     VA.type(el);
+  };
+  /* События прогресса: +XP, достижения, новый уровень */
+  window.VAOnProgress = function (e) {
+    if (e.type === "xp") { const f = document.createElement("div"); f.className = "xpfloat"; f.setAttribute("data-testid", "xp-float"); f.textContent = VA.t("xp_gain", { n: e.n }); f.style.top = (38 + document.querySelectorAll(".xpfloat").length * 7) + "%"; document.body.appendChild(f); setTimeout(() => f.remove(), 1500); const v = document.getElementById("xpVal"); if (v) v.textContent = VAProgress.xp().toLocaleString("ru-RU"); }
+    if (e.type === "ach") { setTimeout(() => { VA.toast("🏆 " + VA.t("ach_unlock_toast", { name: VA.t("ach_" + e.id) })); VA.haptic("success"); const h = document.querySelector(`[data-testid="ach-${e.id}"]`); if (h) h.classList.add("on", "unlock"); }, 600); }
+    if (e.type === "level") setTimeout(() => { VA.toast("⭐ " + VA.t("level_up") + " " + VA.t("level_n", { n: e.n })); VA.haptic("success"); }, 1200);
   };
 })();

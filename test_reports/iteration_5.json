@@ -1,0 +1,23 @@
+{
+  "summary": "Iteration 5 — Claude Sonnet 4.6 mentor + bot integration testing PASSED. All 6 pytest cases green (mentor/ask uk/ar/signal-refusal/422/lang-fallback + mentor/explain persistence in Mongo mentor_messages). Mini App practice flow works end-to-end at 390x844: option B → check → feedback → 'Спросить Волчка, почему' → ai-explain 'Волчок думает…' replaced by real Claude answer in ~9s with typing animation, button disabled during load, 0 console errors. Bot sanity OK: getMe returns @vovchok_academy_bot, backend log has 'Telegram bot polling started', bot.tx()/build_application importable. Regression: node tools/check-i18n.js exit 0 (ru/uk/ar full), home/profile/community screens render with 0 console errors. Optional Nano Banana quote_card test skipped by design (costs credits).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/test_mentor.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "backend/server.py: two @app.on_event('shutdown') handlers registered (_stop_bot and shutdown_db_client) — both run but relying on registration order is fragile; consider merging into one shutdown hook. Also on_event is deprecated in newer FastAPI (use lifespan). Non-blocking.",
+    "miniapp/mentor.py quote_card: uses gemini-3.1-flash-image-preview via emergentintegrations — not exercised in automated tests (documented as optional/costly). Manual verification recommended once per release."
+  ],
+  "updated_files": ["/app/backend/tests/test_mentor.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "No seed data; test writes 1 mentor_messages doc with task_id='m2p' during test_explain_ru_and_persistence (safe to leave).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Mentor endpoints stable. Base URL from frontend/.env EXPO_PUBLIC_BACKEND_URL. Claude responses 8-25s — keep timeouts >= 60s. Signal-refusal test relies on Russian refusal cues (чек/структур/не даю/сам/решен) — if prompt tuning changes, update markers list. Explain persistence verifies db=mentor_messages via MONGO_URL+DB_NAME.",
+  "rca_of_issue": "N/A — no bugs."
+}

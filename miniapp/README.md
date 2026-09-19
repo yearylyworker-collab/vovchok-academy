@@ -35,3 +35,10 @@ Push в `main` → GitHub Actions собирает `dist/` и штампует `
 node tools/check-i18n.js   # exit 1, если где-то нет ru/uk/ar
 ```
 В рантайме пропуски собираются в `window.VA_MISSING` (сейчас пусто).
+
+## Волчок-наставник (Claude Sonnet 4.6) и карточки-цитаты (Nano Banana)
+- `mentor.py` — `ask()` (вопросы в боте), `explain()` (персональный разбор практики), `quote_card()` (цитата + картинка).
+- Бот: любой текст → ответ наставника (без сигналов); кнопка «Цитата дня» / `/quote` → мотивационная карточка.
+- Backend `/app/backend/server.py`: `POST /api/mentor/ask`, `POST /api/mentor/explain`; при `RUN_BOT=1` бот запускается внутри backend (один хостинг).
+- Mini App: кнопка «Спросить Волчка, почему» после проверки ответа. Для GitHub Pages укажи адрес backend в `index.html` → `window.VA_API_URL = "https://<ваш-backend>/api"`.
+- Переменные: `EMERGENT_LLM_KEY`, `BOT_TOKEN`, `MINI_APP_URL`, `RUN_BOT` (см. `.env.example`).

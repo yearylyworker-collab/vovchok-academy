@@ -25,6 +25,9 @@ Source repo: https://github.com/yearylyworker-collab/vovchok-academy (Pages: htt
 
 - Haptics (VA.haptic): Telegram HapticFeedback success/error on practice answers and lesson completion, light impact on nav taps; navigator.vibrate fallback. Testing iteration_3 passed.
 
+- Client-spec redesign (iteration_4 passed): home hero + ring + accordion, Practice Lab (A/B/C/D, filters, weak topics, replay, XP), profile (XP/level/streak/achievements/stats/weak topics/lang), community (2 cards + banner). State in progress.js.
+- Claude Sonnet 4.6 mentor (iteration_5 passed): mentor.py (ask/explain/quote_card), backend /api/mentor/ask|explain (Mongo log mentor_messages), bot free-text answers + /quote Nano Banana card, bot runs inside backend (RUN_BOT=1). Mini App button "Спросить Волчка, почему". VA_API_URL in index.html for GitHub Pages.
+
 ## Backlog
 - P1: Push files to user's GitHub repo (user does via "Save to GitHub" / copy `/app/miniapp/*` to repo root); real iPhone Telegram tap test by user.
 - P2: Server-side progress (Path B), more practice scenarios per module, sound/haptics via Telegram WebApp HapticFeedback.
