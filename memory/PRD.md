@@ -20,6 +20,9 @@ Source repo: https://github.com/yearylyworker-collab/vovchok-academy (Pages: htt
 - Live UI pass (user feedback): animated background (particles/candles/aurora/grid), SVG nav icons, screen transitions/stagger, wolf on every screen with mood-driven mimics, community cards + rules.
 - Testing agent iteration_1: all passed, 0 console errors.
 
+- Funnel v2 (user request): channel-subscription gate instead of partner registration — welcome → conditions (glowing subscribe button, auto-scroll) → animated check (ring 0–100%, 4 ticks) → reward (confetti, 4 showcase tiles with mini charts) → home. Header brand centered. Bot texts/buttons updated (first button = subscribe). Testing iteration_2 passed.
+- Note: subscription check is animated/simulated (static Pages can't call Telegram API); real check requires bot endpoint (getChatMember) — backlog.
+
 ## Backlog
 - P1: Push files to user's GitHub repo (user does via "Save to GitHub" / copy `/app/miniapp/*` to repo root); real iPhone Telegram tap test by user.
 - P2: Server-side progress (Path B), more practice scenarios per module, sound/haptics via Telegram WebApp HapticFeedback.

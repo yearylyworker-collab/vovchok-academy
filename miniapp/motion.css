@@ -152,3 +152,54 @@ html.lite *{animation-duration:.01s!important}
 .logo-word b{animation:logoFlow 10s linear infinite,letterIn .6s cubic-bezier(.34,1.56,.64,1) both}
 .logo-word b:nth-child(2){animation-delay:0s,.05s}.logo-word b:nth-child(3){animation-delay:0s,.1s}.logo-word b:nth-child(4){animation-delay:0s,.15s}.logo-word b:nth-child(5){animation-delay:0s,.2s}.logo-word b:nth-child(6){animation-delay:0s,.25s}.logo-word b:nth-child(7){animation-delay:0s,.3s}
 @keyframes letterIn{from{opacity:0;transform:translateY(12px) scale(.8)}to{opacity:1;transform:none}}
+
+/* ---------- шапка: бренд строго по центру ---------- */
+.toprow{position:relative;justify-content:center;min-height:36px}
+.toprow .brand{flex:none;text-align:center}
+.toprow .beta{position:absolute;right:0;top:50%;transform:translateY(-50%)}
+[dir=rtl] .toprow .beta{right:auto;left:0}
+
+/* ---------- воронка: условия / проверка / награда ---------- */
+.hide{display:none!important}
+.cond{animation:riseIn .5s both;margin-top:6px}
+.cond-item{display:flex;align-items:center;gap:12px;padding:12px 14px;margin-top:10px;border-radius:16px;border:1px solid rgba(60,231,255,.3);background:rgba(10,26,52,.7)}
+.cond-item .cico{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none;color:#041018;background:linear-gradient(135deg,#79f0ff,#2ea8ff);box-shadow:0 6px 16px rgba(46,168,255,.4)}
+.cond-item .cico svg{width:20px;height:20px}
+.cond-item b{font-size:14px;flex:1}
+.tick{width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(60,231,255,.4);display:grid;place-items:center;flex:none;position:relative;transition:.3s}
+.tick::after{content:"";width:6px;height:11px;border:solid #041018;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) scale(0);transition:transform .3s cubic-bezier(.34,1.56,.64,1);margin-top:-2px}
+.tick.on,li.on .tick{background:#3dff9a;border-color:#3dff9a;box-shadow:0 0 14px rgba(61,255,154,.7)}
+.tick.on::after,li.on .tick::after{transform:rotate(45deg) scale(1)}
+.btn.glow{animation:btnGlow 2.2s ease-in-out infinite}
+@keyframes btnGlow{50%{box-shadow:0 8px 34px rgba(60,231,255,.7),0 0 0 4px rgba(60,231,255,.18)}}
+.btn-ok.glow{animation:btnGlowOk 2.2s ease-in-out infinite}
+@keyframes btnGlowOk{50%{box-shadow:0 8px 34px rgba(61,255,154,.7),0 0 0 4px rgba(61,255,154,.18)}}
+.btn.shimmer{background-size:200% 100%;animation:btnGlow 2.2s ease-in-out infinite,shimmerBg 3s linear infinite}
+@keyframes shimmerBg{to{background-position:200% 0}}
+a.btn-primary.shimmer{background:linear-gradient(90deg,#79f0ff,#2ea8ff,#6d7bff,#79f0ff);background-size:200% 100%}
+.btn-ghost.glow-soft{animation:ghostGlow 2.6s ease-in-out infinite}
+@keyframes ghostGlow{50%{border-color:#3ce7ff;box-shadow:0 0 18px rgba(60,231,255,.3)}}
+.ring-box .orbit.o2{width:210px;height:210px;margin-left:-105px;top:87px;animation-duration:14s;animation-direction:reverse;border-style:dotted;opacity:.7}
+.ring-box .orbit.o2::before{background:#7dffc3;box-shadow:0 0 12px #7dffc3}
+.ring-box::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 46%,rgba(60,231,255,.18),transparent 55%);animation:twinkle 2s ease-in-out infinite;pointer-events:none}
+.ring span{transition:.2s;text-shadow:0 0 14px rgba(60,231,255,.6)}
+.checks{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.checks li{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;border:1px solid rgba(60,231,255,.16);background:rgba(8,20,42,.6);color:var(--muted);font-size:13.5px;transition:.3s;opacity:.6}
+.checks li.on{opacity:1;color:var(--text);border-color:rgba(61,255,154,.4);background:rgba(34,197,94,.08)}
+.checks li:not(.on) .tick{animation:spinTick 1s linear infinite;border-top-color:#3ce7ff}
+@keyframes spinTick{to{transform:rotate(360deg)}}
+.reward{position:relative;padding:14px;margin-top:6px;border-radius:22px;border:1px solid rgba(255,213,106,.45);background:radial-gradient(120% 90% at 50% 0%,rgba(255,213,106,.14),rgba(6,16,34,.7));overflow:hidden;box-shadow:0 0 40px rgba(255,213,106,.15),inset 0 1px 0 rgba(255,255,255,.08)}
+.reward .h2{background:linear-gradient(90deg,#ffd56a,#fff,#ffd56a);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:logoFlow 6s linear infinite;letter-spacing:.08em}
+.reward .kicker::before{background:#ffd56a;box-shadow:0 0 10px #ffd56a}
+.reward .kicker{color:#ffd56a}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.tile{position:relative;border-radius:16px;border:1px solid rgba(60,231,255,.25);background:rgba(6,16,32,.8);padding:8px;overflow:hidden;animation:riseIn .6s both}
+.tile:nth-child(2){animation-delay:.12s}.tile:nth-child(3){animation-delay:.24s}.tile:nth-child(4){animation-delay:.36s}
+.tile .live.mini{height:76px;padding:4px;border-radius:12px}
+.tile .tico{position:absolute;top:12px;right:12px;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;color:#041018;background:linear-gradient(135deg,#ffd56a,#ff9f43);box-shadow:0 4px 12px rgba(255,159,67,.45)}
+[dir=rtl] .tile .tico{right:auto;left:12px}
+.tile .tico svg{width:14px;height:14px}
+.tile b{display:block;margin-top:8px;font-size:12.5px}
+.confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.confetti i{position:absolute;top:-12px;width:7px;height:12px;border-radius:2px;opacity:.9;animation:confettiFall 3s linear infinite}
+@keyframes confettiFall{to{transform:translateY(420px) rotate(540deg);opacity:0}}
